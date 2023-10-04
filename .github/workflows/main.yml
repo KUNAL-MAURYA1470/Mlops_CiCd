@@ -8,7 +8,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: 'Train my model'
         env:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.GIT_TOKEN }}
         run: |
 
           # Your ML workflow goes here
@@ -20,7 +20,8 @@ jobs:
           
           echo "\n## Model Performance" >> report.md
           echo "Model performance metrics are on the plot below." >> report.md
+
+          cml comment create report.md
           
-          cml-publish model_results.png --md >> report.md
           
-          cml-send-comment report.md
+           cml send-comment report.md
