@@ -1,26 +1,50 @@
-name: mlops-exaple-tensorflow-regression
-on: [push]
+name: mlops-example-tensorflow-regression
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   run:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     container: docker://dvcorg/cml-py3:latest
     steps:
-      - uses: actions/checkout@v2
-      - name: 'Train my model'
-        env:
-          repo_token: ${{ secrets.GIT_TOKEN }}
-        run: |
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-          # Your ML workflow goes here
-          pip install -r requirements.txt
-          python model.py
-          
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train model
+        run: python model.py
+
+      - name: Generate metrics report
+        run: |
           echo "## Model Metrics" > report.md
           cat metrics.txt >> report.md
-          
           echo "\n## Model Performance" >> report.md
           echo "Model performance metrics are on the plot below." >> report.md
-          
           cml-publish model_results.png --md >> report.md
-          
-          cml-send-comment report.md
+
+      - name: Send email with report
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TO_EMAIL: "krsm1470@example.com"
+          FROM_EMAIL: "krsm1470@example.com"
+          SUBJECT: "Model Metrics Report"
+        run: |
+          apt-get update
+          apt-get install -y mailutils
+
+          cat report.md | mailx -v -r "${FROM_EMAIL}" -s "${SUBJECT}" -S smtp="${SMTP_SERVER}:${SMTP_PORT}" -S smtp-use-starttls -S smtp-auth=login -S smtp-auth-user="${SMTP_USERNAME}" -S smtp-auth-password="${SMTP_PASSWORD}" "${TO_EMAIL}"
+
+      - name: Send comment with report
+        run: cml-send-comment report.md
