@@ -19,7 +19,7 @@ jobs:
           cat metrics.txt >> report.md
           
           echo "\n## Model Performance" >> report.md
-          echo "\n##Model performance metrics plot below." >> report.md
+          echo "##Model performance metrics plot below." >> report.md
           
           cml-publish model_results.png --md >> report.md
           
